@@ -86,6 +86,7 @@ public class DropGame extends ApplicationAdapter {
         }
 
         batch.begin();
+
         batch.draw(backgroundImage, 0, 0);
         batch.draw(bucketImage, bucket.x, bucket.y);
 
@@ -103,12 +104,12 @@ public class DropGame extends ApplicationAdapter {
             bucket.x += Gdx.graphics.getDeltaTime() * bucketSpeed;
         }
 
-        if (bucket.x < 10) {
-            bucket.setX(10);
+        if (bucket.x < -bucket.width) {
+            bucket.setX(800);
         }
 
-        if (bucket.x > 800 - 10 - bucket.width) {
-            bucket.setX(800 - 10 - bucket.width);
+        if (bucket.x > 800) {
+            bucket.setX(-bucket.width);
         }
 
         Array<Rectangle> diamondsToRemove = new Array<>();
