@@ -34,6 +34,8 @@ public class GameScreen implements Screen {
 
     final DiamondDropGame game;
 
+    int collectedDiamonds = 0;
+
     public GameScreen(final DiamondDropGame game) {
         this.game = game;
 
@@ -77,6 +79,8 @@ public class GameScreen implements Screen {
             game.batch.draw(diamondImage, diamond.x, diamond.y);
         }
 
+        game.font.draw(game.batch, Integer.toString(collectedDiamonds), 20, 600 - 20);
+
         game.batch.end();
 
         if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
@@ -106,6 +110,7 @@ public class GameScreen implements Screen {
 
             if (diamond.y < bucket.height + 10 - 20 && bucket.overlaps(diamond)) {
                 dropSound.play();
+                collectedDiamonds++;
                 diamondsToRemove.add(diamond);
             }
         }
