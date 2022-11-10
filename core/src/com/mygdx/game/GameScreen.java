@@ -1,26 +1,24 @@
 package com.mygdx.game;
 
-import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.TimeUtils;
 
-public class DropGame extends ApplicationAdapter {
+public class GameScreen implements Screen {
 
     private float bucketSpeed = 300;
     private float diamondSpeed = 200;
     private OrthographicCamera camera;
-    private SpriteBatch batch;
 
     private Texture bucketImage;
     private Texture backgroundImage;
@@ -34,8 +32,11 @@ public class DropGame extends ApplicationAdapter {
     private Array<Rectangle> diamonds;
     private long lastDropTime;
 
-    @Override
-    public void create() {
+    final DiamondDropGame game;
+
+    public GameScreen(final DiamondDropGame game) {
+        this.game = game;
+
         camera = new OrthographicCamera();
         camera.setToOrtho(false, 800, 600);
 
@@ -54,12 +55,62 @@ public class DropGame extends ApplicationAdapter {
         spawnDiamond();
 
         dropSound = Gdx.audio.newSound(Gdx.files.internal("drop.mp3"));
+
         backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("moog_city_2.mp3"));
-
         backgroundMusic.setLooping(true);
-        backgroundMusic.play();
+    }
 
-        batch = new SpriteBatch();
+    @Override
+    public void render(float delta) {
+        ScreenUtils.clear(Color.BLACK);
+
+        if (TimeUtils.nanoTime() - lastDropTime > Math.pow(10, 9)) {
+            spawnDiamond();
+        }
+
+        game.batch.begin();
+
+        game.batch.draw(backgroundImage, 0, 0);
+        game.batch.draw(bucketImage, bucket.x, bucket.y);
+
+        for (Rectangle diamond : diamonds) {
+            game.batch.draw(diamondImage, diamond.x, diamond.y);
+        }
+
+        game.batch.end();
+
+        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+            bucket.x -= delta * bucketSpeed;
+        }
+
+        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+            bucket.x += delta * bucketSpeed;
+        }
+
+        if (bucket.x < -bucket.width) {
+            bucket.setX(800);
+        }
+
+        if (bucket.x > 800) {
+            bucket.setX(-bucket.width);
+        }
+
+        Array<Rectangle> diamondsToRemove = new Array<>();
+
+        for (Rectangle diamond : diamonds) {
+            diamond.y -= diamondSpeed * delta;
+
+            if (diamond.y < 10) {
+                diamondsToRemove.add(diamond);
+            }
+
+            if (diamond.y < bucket.height + 10 - 20 && bucket.overlaps(diamond)) {
+                dropSound.play();
+                diamondsToRemove.add(diamond);
+            }
+        }
+
+        diamonds.removeAll(diamondsToRemove, true);
     }
 
     private void spawnDiamond() {
@@ -78,64 +129,37 @@ public class DropGame extends ApplicationAdapter {
     }
 
     @Override
-    public void render() {
-        ScreenUtils.clear(Color.BLACK);
-
-        if (TimeUtils.nanoTime() - lastDropTime > Math.pow(10, 9)) {
-            spawnDiamond();
-        }
-
-        batch.begin();
-
-        batch.draw(backgroundImage, 0, 0);
-        batch.draw(bucketImage, bucket.x, bucket.y);
-
-        for (Rectangle diamond : diamonds) {
-            batch.draw(diamondImage, diamond.x, diamond.y);
-        }
-
-        batch.end();
-
-        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            bucket.x -= Gdx.graphics.getDeltaTime() * bucketSpeed;
-        }
-
-        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            bucket.x += Gdx.graphics.getDeltaTime() * bucketSpeed;
-        }
-
-        if (bucket.x < -bucket.width) {
-            bucket.setX(800);
-        }
-
-        if (bucket.x > 800) {
-            bucket.setX(-bucket.width);
-        }
-
-        Array<Rectangle> diamondsToRemove = new Array<>();
-
-        for (Rectangle diamond : diamonds) {
-            diamond.y -= diamondSpeed * Gdx.graphics.getDeltaTime();
-
-            if (diamond.y < 10) {
-                diamondsToRemove.add(diamond);
-            }
-
-            if (diamond.y < bucket.height + 10 - 20 && bucket.overlaps(diamond)) {
-                dropSound.play();
-                diamondsToRemove.add(diamond);
-            }
-        }
-
-        diamonds.removeAll(diamondsToRemove, true);
-    }
-
-    @Override
     public void dispose() {
-        batch.dispose();
         bucketImage.dispose();
+        backgroundImage.dispose();
         diamondImage.dispose();
         dropSound.dispose();
         backgroundMusic.dispose();
+    }
+
+    @Override
+    public void show() {
+        // screen is shown, play the music
+        backgroundMusic.play();
+    }
+
+    @Override
+    public void resize(int width, int height) {
+
+    }
+
+    @Override
+    public void pause() {
+
+    }
+
+    @Override
+    public void resume() {
+
+    }
+
+    @Override
+    public void hide() {
+
     }
 }
